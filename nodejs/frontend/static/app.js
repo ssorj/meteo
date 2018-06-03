@@ -21,8 +21,10 @@
 
 "use strict";
 
-var app = {
+const app = {
     data: null,
+    map: null,
+    markers: {},
 
     fetchDataPeriodically: function () {
         function handler(data) {
@@ -36,23 +38,34 @@ var app = {
     renderWeatherStations: function (data) {
         console.log("Rendering weather stations");
 
-        var oldContent = $("#weather-stations");
-        var newContent = document.createElement("pre");
+        for (let id in data.weatherStations) {
+            let update = data.weatherStations[id];
+            let timestamp = update.timestamp;
+            let temperature = update.temperature;
+            
+            let celsius = temperature + String.fromCharCode(176) + "C"
+            let farenheit = ((9 / 5) * temperature + 32) + String.fromCharCode(176) + "F"
 
-        var lines = [];
+            let marker = app.markers[id];
 
-        for (var id in data.weatherStations) {
-            var update = data.weatherStations[id];
-            var timestamp = update.timestamp;
-            var temperature = update.temperature;
+            if (!marker) {
+                marker = new google.maps.Marker({map: app.map});
+                app.markers[id] = marker;
+                
+                marker.meteoInfoWindow = new google.maps.InfoWindow();
+                marker.addListener("click", function() {
+                    marker.meteoInfoWindow.open(app.map, marker);
+                });
+            }
 
-            lines.unshift(("<b>" + id + ":</b> ").padEnd(30) + timestamp + ", " + temperature);
+            marker.setPosition({lat: update.latitude, lng: update.longitude});
+
+            const elem = document.createElement("div");
+            gesso.createDiv(elem, "temperature", celsius + " " + farenheit);
+            gesso.createDiv(elem, "timestamp", new Date(timestamp).toLocaleString());
+            
+            marker.meteoInfoWindow.setContent(elem);
         }
-
-        newContent.innerHTML = lines.join("\n");
-        newContent.setAttribute("id", "weather-stations");
-
-        oldContent.parentNode.replaceChild(newContent, oldContent);
     },
 
     init: function () {
@@ -61,7 +74,12 @@ var app = {
         });
 
         window.addEventListener("load", function (event) {
+            app.map = new google.maps.Map(document.getElementById("map"), {
+                center: {lat: 30, lng: -30},
+                zoom: 3
+            });
+
             app.fetchDataPeriodically();
-         });
+        });
     }
 }

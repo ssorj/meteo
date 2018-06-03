@@ -23,8 +23,8 @@ const body_parser = require("body-parser");
 const express = require("express");
 const rhea = require("rhea");
 
-const http_host = process.env.IP || process.env.OPENSHIFT_NODEJS_IP || "0.0.0.0";
-const http_port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080;
+const http_host = process.env.HOST || "0.0.0.0";
+const http_port = process.env.PORT || 8080;
 
 const amqp_host = process.env.MESSAGING_SERVICE_HOST || "localhost";
 const amqp_port = process.env.MESSAGING_SERVICE_PORT || 5672;
