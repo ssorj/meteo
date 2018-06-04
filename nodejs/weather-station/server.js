@@ -40,7 +40,7 @@ function send_status_update() {
         return;
     }
 
-    console.log("WEATHER-STATION-NODEJS: Sending status update");
+    console.log("WEATHER-STATION-NODEJS: Sending update");
 
     var status = {
         body: {
