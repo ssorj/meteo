@@ -49,9 +49,9 @@ container.on("message", function (event) {
 
     var update = event.message.body;
 
-    console.log("FRONTEND-NODEJS: Received status update from %s", update.id);
+    console.log("FRONTEND-NODEJS: Received status update from %s", update.stationId);
 
-    weather_stations[update.id] = update;
+    weather_stations[update.stationId] = update;
 });
 
 const opts = {

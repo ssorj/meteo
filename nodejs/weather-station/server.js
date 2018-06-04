@@ -27,7 +27,7 @@ const amqp_user = process.env.MESSAGING_SERVICE_USER || "meteo";
 const amqp_password = process.env.MESSAGING_SERVICE_PASSWORD || "meteo";
 
 const id = Math.floor(Math.random() * (10000 - 1000)) + 1000;
-const container = rhea.create_container({id: "weather-station-nodejs-" + id});
+const container = rhea.create_container({id: "weather-station-" + id});
 
 var sender = null;
 
@@ -44,14 +44,13 @@ function send_status_update() {
 
     var status = {
         body: {
-            id: container.id,
+            stationId: container.id,
             timestamp: new Date().getTime(),
             latitude: 37.740656,
             longitude: -122.480608,
             temperature: 10.0,
             humidity: null,
-            pressure: null,
-            operator: "Justin R"
+            pressure: null
         }
     };
 
