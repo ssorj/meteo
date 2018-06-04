@@ -42,7 +42,7 @@ while True:
     time.sleep(5)
 
     data = {
-        "id": client_id,
+        "stationId": client_id,
         "timestamp": round(time.time() * 1000),
         "latitude": 3.5,
         "longitude": -76,
