@@ -46,9 +46,8 @@ function send_status_update() {
         body: {
             id: container.id,
             timestamp: new Date().getTime(),
-            latitude: 56.15, // 37.740656,
-            longitude: -4.64, // -122.480608,
-            elevation: null, // 75m
+            latitude: 37.740656,
+            longitude: -122.480608,
             temperature: 10.0,
             humidity: null,
             pressure: null,

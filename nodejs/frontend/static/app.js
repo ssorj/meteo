@@ -42,28 +42,41 @@ const app = {
             let update = data.weatherStations[id];
             let timestamp = update.timestamp;
             let temperature = update.temperature;
-            
+
             let celsius = temperature + String.fromCharCode(176) + "C"
             let farenheit = ((9 / 5) * temperature + 32) + String.fromCharCode(176) + "F"
 
             let marker = app.markers[id];
 
             if (!marker) {
-                marker = new google.maps.Marker({map: app.map});
+                marker = new google.maps.Marker({
+                    map: app.map,
+                    label: {
+                        text: "-",
+                        color: "white",
+                        fontWeight: "bold",
+                        fontSize: "10px"
+                    }
+                });
+
                 app.markers[id] = marker;
-                
+
                 marker.meteoInfoWindow = new google.maps.InfoWindow();
+
                 marker.addListener("click", function() {
                     marker.meteoInfoWindow.open(app.map, marker);
                 });
             }
 
-            marker.setPosition({lat: update.latitude, lng: update.longitude});
+            marker.setPosition(new google.maps.LatLng(update.latitude, update.longitude));
+            marker.getLabel().text = Math.round(temperature).toString() + String.fromCharCode(176);
 
             const elem = document.createElement("div");
+            elem.classList.add("weather-station-properties")
+
             gesso.createDiv(elem, "temperature", celsius + " " + farenheit);
             gesso.createDiv(elem, "timestamp", new Date(timestamp).toLocaleString());
-            
+
             marker.meteoInfoWindow.setContent(elem);
         }
     },
