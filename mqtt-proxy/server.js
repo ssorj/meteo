@@ -19,49 +19,72 @@
 
 "use strict";
 
-var net = require("net")
-var mqttCon = require("mqtt-connection")
-var server = new net.Server()
- 
-server.on("connection", function (stream) {
-    var client = mqttCon(stream)
-    
-    // client connected
-    client.on("connect", function (packet) {
-        // acknowledge the connect packet
-        client.connack({ returnCode: 0 });
-    })
-    
-    // client published
-    client.on("publish", function (packet) {
-        console.log("publish", packet);
-        // send a puback with messageId (for QoS > 0)
-        client.puback({ messageId: packet.messageId })
-    })
-    
-    // client pinged
-    client.on("pingreq", function () {
-        // send a pingresp
-        client.pingresp()
-    });
-    
-    // client subscribed
-    client.on("subscribe", function (packet) {
-        // send a suback with messageId and granted QoS level
-        client.suback({ granted: [packet.qos], messageId: packet.messageId })
-    })
-    
-    // timeout idle streams after 5 minutes
-    stream.setTimeout(1000 * 60 * 5)
-    
-    // connection error handling
-    client.on("close", function () { client.destroy() })
-    client.on("error", function () { client.destroy() })
-    client.on("disconnect", function () { client.destroy() })
-    
-    // stream timeout
-    stream.on("timeout", function () { client.destroy(); })
-})
+const net = require("net");
+const mqtt_connection = require("mqtt-connection")
+const rhea = require("rhea")
 
-// listen on port 1883
-server.listen(1883)
+const mqtt_server = new net.Server()
+const amqp_server = rhea.create_container()
+const amqp_senders = new Map();
+
+let amqp_conn;
+
+mqtt_server.on("connection", (stream) => {
+    const client = mqtt_connection(stream);
+
+    client.on("connect", (packet) => {
+        console.log("MQTT: Client connected");
+        client.connack({ returnCode: 0 });
+    });
+
+    client.on("publish", (packet) => {
+        console.log("MQTT: Client published");
+
+        if (!amqp_conn) return;
+
+        let sender = amqp_senders[packet.topic];
+
+        if (sender) {
+            if (sender.sendable()) {
+                send_amqp_message(sender, packet);
+            }
+        } else {
+            sender = amqp_conn.open_sender(packet.topic);
+            amqp_senders[packet.topic] = sender;
+
+            send_amqp_message(sender, packet);
+        }
+    });
+
+    client.on("pingreq", () => {
+        console.log("MQTT: Client pinged");
+        client.pingresp();
+    });
+
+    stream.setTimeout(1000 * 60 * 5);
+
+    client.on("close", () => { client.destroy() });
+    client.on("error", () => { client.destroy() });
+    client.on("disconnect", () => { client.destroy() });
+    stream.on("timeout", () => { client.destroy(); });
+});
+
+amqp_server.on("connection_open", (event) => {
+    console.log("AMQP: Connected");
+});
+
+amqp_server.on("sender_open", (event) => {
+    console.log("AMQP: Sender opened");
+});
+
+function send_amqp_message(sender, packet) {
+    let message = {
+        content_type: "application/json",
+        body: packet.payload
+    };
+
+    sender.send(message);
+}
+
+mqtt_server.listen(1883);
+amqp_conn = amqp_server.connect({port: 5672});
