@@ -9,4 +9,4 @@ clean:
 
 .PHONY: run
 run:
-	MESSAGING_SERVICE_HOST=amqp.zone npm start
+	MESSAGING_SERVICE_HOST=localhost npm start

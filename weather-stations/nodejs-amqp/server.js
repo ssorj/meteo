@@ -26,10 +26,10 @@ const amqp_port = process.env.MESSAGING_SERVICE_PORT || 5672;
 const amqp_user = process.env.MESSAGING_SERVICE_USER || "meteo";
 const amqp_password = process.env.MESSAGING_SERVICE_PASSWORD || "meteo";
 
-const id = Math.floor(Math.random() * (10000 - 1000)) + 1000;
+const id = rhea.generate_uuid().slice(0, 4);
 const container = rhea.create_container({id: "weather-station-" + id});
 
-var sender = null;
+let sender = null;
 
 container.on("connection_open", function (event) {
     sender = event.connection.open_sender("meteo/weather-station-updates");
@@ -42,7 +42,8 @@ function send_status_update() {
 
     console.log("WEATHER-STATION-NODEJS: Sending update");
 
-    var status = {
+    let status = {
+        content_type: "application/json",
         body: {
             stationId: container.id,
             timestamp: new Date().getTime(),
