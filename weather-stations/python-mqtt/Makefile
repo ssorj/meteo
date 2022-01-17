@@ -1,3 +1,3 @@
 .PHONY: run
 run:
-	python app.py
+	python3 app.py

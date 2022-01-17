@@ -1,5 +1,5 @@
 {
-    "name": "meteo-weather-station-nodejs",
+    "name": "meteo-weather-station-nodejs-amqp",
     "version": "1.0.0",
     "description": "XXX",
     "license": "Apache-2.0",

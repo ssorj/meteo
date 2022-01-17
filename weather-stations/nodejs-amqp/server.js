@@ -21,17 +21,15 @@
 
 const rhea = require("rhea");
 
-const amqp_host = process.env.MESSAGING_SERVICE_HOST || "localhost";
-const amqp_port = process.env.MESSAGING_SERVICE_PORT || 5672;
-const amqp_user = process.env.MESSAGING_SERVICE_USER || "meteo";
-const amqp_password = process.env.MESSAGING_SERVICE_PASSWORD || "meteo";
+const host = process.env.MESSAGING_SERVICE_HOST || "localhost";
+const port = process.env.MESSAGING_SERVICE_PORT || 5672;
 
-const id = rhea.generate_uuid().slice(0, 4);
-const container = rhea.create_container({id: "weather-station-" + id});
+const station_id = `nodejs-amqp-${rhea.generate_uuid().slice(0, 4)}`
+const container = rhea.create_container({id: `weather-station-${station_id}`});
 
-let sender = null;
+let sender;
 
-container.on("connection_open", function (event) {
+container.on("connection_open", (event) => {
     sender = event.connection.open_sender("meteo/weather-station-updates");
 });
 
@@ -40,33 +38,26 @@ function send_status_update() {
         return;
     }
 
-    console.log("WEATHER-STATION-NODEJS: Sending update");
+    console.log("NODEJS-AMQP: Sending update");
 
-    let status = {
+    let update = {
         content_type: "application/json",
-        body: {
-            stationId: container.id,
-            timestamp: new Date().getTime(),
+        body: JSON.stringify({
+            station_id: station_id,
+            time: new Date().getTime(),
             latitude: 37.740656,
             longitude: -122.480608,
             temperature: 10.0,
             humidity: null,
             pressure: null
-        }
+        })
     };
 
-    sender.send(status);
+    sender.send(update);
 }
 
 setInterval(send_status_update, 5 * 1000);
 
-const opts = {
-    host: amqp_host,
-    port: amqp_port,
-    username: amqp_user,
-    password: amqp_password,
-};
+container.connect({host: host, port: port});
 
-container.connect(opts);
-
-console.log("Connected to AMQP messaging service at %s:%s", amqp_host, amqp_port);
+console.log("Connected to AMQP messaging service at %s:%s", host, port);

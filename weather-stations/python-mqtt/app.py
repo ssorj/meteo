@@ -18,35 +18,38 @@
 # under the License.
 #
 
-from __future__ import print_function
-
 import json
 import time
+import uuid
 
 import paho.mqtt.client as mqtt
 
-client_id = "weather-station-python-mqtt-{}"
-client = mqtt.Client(client_id)
+station_id = f"python-mqtt-{str(uuid.uuid4())[:4]}"
+client = mqtt.Client(f"weather-station-{station_id}")
 
 def on_log(client, userdata, level, buf):
     print(buf)
 
-client.on_log = on_log
+#client.on_log = on_log
 
-client.username_pw_set("meteo", "meteo")
+#client.username_pw_set("meteo", "meteo")
 client.connect("localhost")
 
 client.loop_start()
-    
+
 while True:
     time.sleep(5)
 
-    data = {
-        "stationId": client_id,
-        "timestamp": round(time.time() * 1000),
+    update = {
+        "station_id": station_id,
+        "time": round(time.time() * 1000),
         "latitude": 3.5,
         "longitude": -76,
         "temperature": 20,
+        "humidity": None,
+        "pressure": None,
     }
 
-    client.publish("meteo/weather-station-updates", json.dumps(data))
+    print("PYTHON-MQTT: Sending update");
+
+    client.publish("meteo/weather-station-updates", json.dumps(update).encode("utf-8"))

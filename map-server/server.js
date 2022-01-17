@@ -34,36 +34,37 @@ const amqp_password = process.env.MESSAGING_SERVICE_PASSWORD || "meteo";
 // AMQP
 
 const id = Math.floor(Math.random() * (10000 - 1000)) + 1000;
-const container = rhea.create_container({id: "web-nodejs-" + id});
+const container = rhea.create_container({id: `map-server-${rhea.generate_uuid().slice(0, 4)}`});
 
-var receiver = null;
+let receiver;
 
 const weather_stations = {};
 
-container.on("connection_open", function (event) {
+container.on("connection_open", (event) => {
     receiver = event.connection.open_receiver("meteo/weather-station-updates");
 });
 
-container.on("message", function (event) {
+container.on("message", (event) => {
     if (event.receiver !== receiver) return;
 
-    var update = event.message.body;
+    let json = event.message.body;
+    let update = JSON.parse(json);
 
-    console.log("FRONTEND-NODEJS: Received status update from %s", update.stationId);
+    console.log("MAP-SERVER: Received status update from %s", update.station_id);
 
-    weather_stations[update.stationId] = update;
+    weather_stations[update.station_id] = update;
 });
 
 const opts = {
     host: amqp_host,
     port: amqp_port,
-    username: amqp_user,
-    password: amqp_password,
+    // username: amqp_user,
+    // password: amqp_password,
 };
 
 container.connect(opts);
 
-console.log("Connected to AMQP messaging service at %s:%s", amqp_host, amqp_port);
+console.log("MAP-SERVER: Connected to AMQP messaging service at %s:%s", amqp_host, amqp_port);
 
 // HTTP
 
